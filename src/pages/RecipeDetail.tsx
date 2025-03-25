@@ -129,7 +129,7 @@ const RecipeDetail: React.FC = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center text-sm text-accent hover:text-accent/80 transition-colors"
                 >
-                  <ExternalLink size={16} className="mr-2" />
+                  <ExternalLink size={16} className="mr-2" aria-hidden="true" />
                   <span>Original recipe source</span>
                 </a>
               </div>
