@@ -6,7 +6,7 @@ import RecipeCard from '@/components/RecipeCard';
 import { useRecipes } from '@/context/RecipeContext';
 
 const Dashboard: React.FC = () => {
-  const { recipes } = useRecipes();
+  const { recipes, loading, error } = useRecipes();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter recipes based on search term
@@ -36,7 +36,16 @@ const Dashboard: React.FC = () => {
         <div className="space-y-8">
           <section>
             <h2 className="text-2xl font-medium mb-6">Your Recipes</h2>
-            {filteredRecipes.length > 0 ? (
+            
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading recipes...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-destructive">Error: {error}</p>
+              </div>
+            ) : filteredRecipes.length > 0 ? (
               <div className="layout-grid">
                 {filteredRecipes.map((recipe) => (
                   <RecipeCard key={recipe.id} recipe={recipe} />

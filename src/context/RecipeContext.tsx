@@ -1,5 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { supabase, mapDbRecipeToRecipe, mapRecipeToDbRecipe } from '@/lib/supabase';
 
 export interface Recipe {
   id: string;
@@ -17,15 +19,18 @@ export interface Recipe {
 
 interface RecipeContextType {
   recipes: Recipe[];
-  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateRecipe: (id: string, recipe: Partial<Recipe>) => void;
-  deleteRecipe: (id: string) => void;
+  loading: boolean;
+  error: string | null;
+  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateRecipe: (id: string, recipe: Partial<Recipe>) => Promise<void>;
+  deleteRecipe: (id: string) => Promise<void>;
   getRecipe: (id: string) => Recipe | undefined;
-  rateRecipe: (id: string, rating: number) => void;
+  rateRecipe: (id: string, rating: number) => Promise<void>;
 }
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
+// Demo recipes are moved here to be used as fallback
 const demoRecipes: Recipe[] = [
   {
     id: '1',
@@ -89,50 +94,126 @@ const demoRecipes: Recipe[] = [
 ];
 
 export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [recipes, setRecipes] = useState<Recipe[]>(() => {
-    const savedRecipes = localStorage.getItem('recipes');
-    return savedRecipes ? JSON.parse(savedRecipes) : demoRecipes;
-  });
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch recipes from Supabase on component mount
   useEffect(() => {
-    localStorage.setItem('recipes', JSON.stringify(recipes));
-  }, [recipes]);
+    const fetchRecipes = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('recipes')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-  const addRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const now = new Date();
-    const newRecipe: Recipe = {
-      ...recipe,
-      id: Date.now().toString(),
-      createdAt: now,
-      updatedAt: now,
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          // Map database recipes to app format
+          const mappedRecipes = data.map(mapDbRecipeToRecipe);
+          setRecipes(mappedRecipes);
+        } else {
+          // If no recipes are found, use demo recipes as fallback
+          setRecipes(demoRecipes);
+        }
+      } catch (err) {
+        console.error('Error fetching recipes:', err);
+        setError('Failed to load recipes');
+        // Use demo recipes as fallback
+        setRecipes(demoRecipes);
+        toast.error('Failed to load recipes. Using demo data instead.');
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    setRecipes((prevRecipes) => [newRecipe, ...prevRecipes]);
-    toast.success('Recipe created successfully');
+
+    fetchRecipes();
+  }, []);
+
+  const addRecipe = async (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const dbRecipe = mapRecipeToDbRecipe(recipe);
+      
+      const { data, error } = await supabase
+        .from('recipes')
+        .insert(dbRecipe)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const newRecipe = mapDbRecipeToRecipe(data);
+        setRecipes((prevRecipes) => [newRecipe, ...prevRecipes]);
+        toast.success('Recipe created successfully');
+      }
+    } catch (err) {
+      console.error('Error adding recipe:', err);
+      toast.error('Failed to create recipe');
+      throw err;
+    }
   };
 
-  const updateRecipe = (id: string, updatedFields: Partial<Recipe>) => {
-    setRecipes((prevRecipes) =>
-      prevRecipes.map((recipe) =>
-        recipe.id === id
-          ? { ...recipe, ...updatedFields, updatedAt: new Date() }
-          : recipe
-      )
-    );
-    toast.success('Recipe updated successfully');
+  const updateRecipe = async (id: string, updatedFields: Partial<Recipe>) => {
+    try {
+      // Convert dates to strings for Supabase
+      const dbFields: any = { ...updatedFields };
+      
+      if (updatedFields.imageUrl !== undefined) {
+        dbFields.image_url = updatedFields.imageUrl;
+        delete dbFields.imageUrl;
+      }
+
+      const { error } = await supabase
+        .from('recipes')
+        .update({ ...dbFields, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setRecipes((prevRecipes) =>
+        prevRecipes.map((recipe) =>
+          recipe.id === id
+            ? { ...recipe, ...updatedFields, updatedAt: new Date() }
+            : recipe
+        )
+      );
+      toast.success('Recipe updated successfully');
+    } catch (err) {
+      console.error('Error updating recipe:', err);
+      toast.error('Failed to update recipe');
+      throw err;
+    }
   };
 
-  const deleteRecipe = (id: string) => {
-    setRecipes((prevRecipes) => prevRecipes.filter((recipe) => recipe.id !== id));
-    toast.success('Recipe deleted successfully');
+  const deleteRecipe = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('recipes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setRecipes((prevRecipes) => prevRecipes.filter((recipe) => recipe.id !== id));
+      toast.success('Recipe deleted successfully');
+    } catch (err) {
+      console.error('Error deleting recipe:', err);
+      toast.error('Failed to delete recipe');
+      throw err;
+    }
   };
 
   const getRecipe = (id: string) => {
     return recipes.find((recipe) => recipe.id === id);
   };
 
-  const rateRecipe = (id: string, rating: number) => {
-    updateRecipe(id, { rating });
+  const rateRecipe = async (id: string, rating: number) => {
+    await updateRecipe(id, { rating });
     toast.success('Rating saved');
   };
 
@@ -140,6 +221,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <RecipeContext.Provider
       value={{
         recipes,
+        loading,
+        error,
         addRecipe,
         updateRecipe,
         deleteRecipe,
