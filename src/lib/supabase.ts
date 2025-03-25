@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Recipe } from '@/context/RecipeContext';
+import { Recipe } from '@/types/recipe';
 
 // Supabase URLs and keys - using fallbacks for safety
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
