@@ -2,11 +2,17 @@
 import { createClient } from '@supabase/supabase-js';
 import { Recipe } from '@/context/RecipeContext';
 
-// Create Supabase client using environment variables
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+// Supabase URLs and keys - using fallbacks for safety
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// Check if we have the required configuration
+const hasSupabaseConfig = supabaseUrl && supabaseAnonKey;
+
+// Create Supabase client with config check
+export const supabase = hasSupabaseConfig 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Type for the database recipe (how it's stored in Supabase)
 export interface DbRecipe {
