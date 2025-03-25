@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Clock } from 'lucide-react';
+import { X, Plus, Clock, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRecipes, Recipe } from '@/context/RecipeContext';
 
@@ -19,6 +19,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ initialData, mode }) => {
   const [notes, setNotes] = useState(initialData?.notes || '');
   const [duration, setDuration] = useState(initialData?.duration || 30);
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
+  const [source, setSource] = useState(initialData?.source || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleIngredientChange = (index: number, value: string) => {
@@ -61,8 +62,23 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ initialData, mode }) => {
       newErrors.duration = 'Duration must be greater than 0';
     }
     
+    // Validate URL format if source is provided
+    if (source && !isValidUrl(source)) {
+      newErrors.source = 'Please enter a valid URL';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Helper function to validate URL format
+  const isValidUrl = (string: string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -79,6 +95,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ initialData, mode }) => {
       notes: notes || undefined,
       duration,
       imageUrl: imageUrl || undefined,
+      source: source || undefined,
       rating: initialData?.rating,
     };
     
@@ -200,6 +217,22 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ initialData, mode }) => {
             placeholder="https://example.com/image.jpg"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="source" className="block text-sm font-medium flex items-center gap-2">
+          <Link size={16} />
+          <span>Recipe Source (Optional)</span>
+        </label>
+        <input
+          id="source"
+          type="text"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="w-full p-3 rounded-lg bg-white/50 border border-border focus:ring-2 focus:ring-accent focus:outline-none transition-all"
+          placeholder="https://example.com/recipe"
+        />
+        {errors.source && <p className="text-sm text-destructive">{errors.source}</p>}
       </div>
 
       <div className="flex justify-end gap-4 pt-4">

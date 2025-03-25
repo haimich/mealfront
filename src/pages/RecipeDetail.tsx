@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Clock, Pencil, Trash2, ArrowLeft, Check } from 'lucide-react';
+import { Clock, Pencil, Trash2, ArrowLeft, Check, ExternalLink } from 'lucide-react';
 import Layout from '@/components/Layout';
 import StarRating from '@/components/StarRating';
 import { useRecipes } from '@/context/RecipeContext';
@@ -120,6 +120,20 @@ const RecipeDetail: React.FC = () => {
                 )}
               </div>
             </div>
+            
+            {recipe.source && (
+              <div className="mb-6">
+                <a 
+                  href={recipe.source} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-sm text-accent hover:text-accent/80 transition-colors"
+                >
+                  <ExternalLink size={16} className="mr-2" />
+                  <span>Original recipe source</span>
+                </a>
+              </div>
+            )}
             
             <div className="space-y-8">
               <section>

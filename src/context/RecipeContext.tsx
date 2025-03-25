@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -13,6 +12,7 @@ export interface Recipe {
   createdAt: Date;
   updatedAt: Date;
   imageUrl?: string;
+  source?: string; // URL source for the recipe
 }
 
 interface RecipeContextType {
@@ -45,7 +45,8 @@ const demoRecipes: Recipe[] = [
     rating: 4.5,
     createdAt: new Date(Date.now() - 86400000 * 2),
     updatedAt: new Date(Date.now() - 86400000 * 2),
-    imageUrl: 'https://images.unsplash.com/photo-1565299543923-37dd37887442?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3'
+    imageUrl: 'https://images.unsplash.com/photo-1565299543923-37dd37887442?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3',
+    source: 'https://www.allrecipes.com/recipe/21014/good-old-fashioned-pancakes/'
   },
   {
     id: '2',
@@ -62,7 +63,8 @@ const demoRecipes: Recipe[] = [
     rating: 5,
     createdAt: new Date(Date.now() - 86400000),
     updatedAt: new Date(Date.now() - 86400000),
-    imageUrl: 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3'
+    imageUrl: 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3',
+    source: 'https://cookieandkate.com/avocado-toast-recipe/'
   },
   {
     id: '3',
@@ -81,7 +83,8 @@ const demoRecipes: Recipe[] = [
     rating: 4,
     createdAt: new Date(),
     updatedAt: new Date(),
-    imageUrl: 'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3'
+    imageUrl: 'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3',
+    source: 'https://www.simplyrecipes.com/recipes/caprese_salad/'
   },
 ];
 
