@@ -3,7 +3,7 @@ import React from 'react';
 import { Clock, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StarRating from './StarRating';
-import type { Recipe } from '@/context/RecipeContext';
+import type { Recipe } from '@/types/recipe';
 
 interface RecipeCardProps {
   recipe: Recipe;

@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { X, Plus, Clock, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useRecipes, Recipe } from '@/context/RecipeContext';
+import { useRecipes } from '@/context/RecipeContext';
+import type { Recipe } from '@/types/recipe';
 
 interface RecipeFormProps {
   initialData?: Recipe;
