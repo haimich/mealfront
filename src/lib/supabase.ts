@@ -3,11 +3,45 @@ import { createClient } from '@supabase/supabase-js';
 import { Recipe } from '@/types/recipe';
 
 // Supabase URLs and keys
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client with safeguards
+let supabase: ReturnType<typeof createClient>;
+
+try {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('Supabase client initialized');
+} catch (error) {
+  console.error('Failed to initialize Supabase client:', error);
+  // Create a mock client that doesn't throw errors for development
+  supabase = {
+    from: () => ({
+      select: () => ({ data: [], error: null }),
+      insert: () => ({ data: null, error: null }),
+      update: () => ({ data: null, error: null }),
+      delete: () => ({ data: null, error: null }),
+      eq: () => ({ data: null, error: null }),
+      order: () => ({ data: [], error: null }),
+      single: () => ({ data: null, error: null }),
+    }),
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+      signUp: () => Promise.resolve({ data: { user: null }, error: null }),
+      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      }),
+    },
+  } as any;
+}
+
+export { supabase };
 
 // Type for the database recipe (how it's stored in Supabase)
 export interface DbRecipe {
