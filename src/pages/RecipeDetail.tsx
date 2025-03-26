@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Clock, Pencil, Trash2, ArrowLeft, Check, ExternalLink } from 'lucide-react';
+import { Clock, Pencil, Trash2, ArrowLeft, Check, ExternalLink, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import StarRating from '@/components/StarRating';
 import { useRecipes } from '@/context/RecipeContext';
 import { useAuth } from '@/context/AuthContext';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { supabase } from '@/lib/supabase';
 
 const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,8 +15,32 @@ const RecipeDetail: React.FC = () => {
   const { getRecipe, deleteRecipe, rateRecipe } = useRecipes();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { user } = useAuth();
+  const [creator, setCreator] = useState<string | null>(null);
 
   const recipe = getRecipe(id || '');
+
+  // Fetch creator email
+  useEffect(() => {
+    const fetchCreator = async () => {
+      if (recipe?.userId) {
+        const { data, error } = await supabase
+          .from('recipes')
+          .select('user_id')
+          .eq('id', recipe.id)
+          .single();
+        
+        if (!error && data) {
+          // Get user email from auth.users
+          const { data: userData } = await supabase.auth.admin.getUserById(data.user_id);
+          if (userData?.user) {
+            setCreator(userData.user.email);
+          }
+        }
+      }
+    };
+
+    fetchCreator();
+  }, [recipe]);
 
   if (!recipe) {
     return (
@@ -71,7 +97,7 @@ const RecipeDetail: React.FC = () => {
           </Link>
           
           <div className="flex gap-2">
-            {user && (
+            {user && user.id === recipe.userId && (
               <>
                 <Link 
                   to={`/edit/${recipe.id}`} 
@@ -126,6 +152,17 @@ const RecipeDetail: React.FC = () => {
                 )}
               </div>
             </div>
+            
+            {creator && (
+              <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
+                <Avatar className="h-7 w-7">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    <User size={14} />
+                  </AvatarFallback>
+                </Avatar>
+                <span>Created by {creator}</span>
+              </div>
+            )}
             
             {recipe.source && (
               <div className="mb-6">

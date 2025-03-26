@@ -35,6 +35,7 @@ export const mapDbRecipeToRecipe = (dbRecipe: DbRecipe): Recipe => ({
   updatedAt: new Date(dbRecipe.updated_at),
   imageUrl: dbRecipe.image_url,
   source: dbRecipe.source,
+  userId: dbRecipe.user_id,
 });
 
 // Convert from app format to DB format

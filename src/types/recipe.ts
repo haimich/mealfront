@@ -12,6 +12,7 @@ export interface Recipe {
   updatedAt: Date;
   imageUrl?: string;
   source?: string; // URL source for the recipe
+  userId?: string; // ID of the user who created the recipe
 }
 
 export interface RecipeContextType {
