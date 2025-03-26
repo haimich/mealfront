@@ -5,12 +5,14 @@ import { Clock, Pencil, Trash2, ArrowLeft, Check, ExternalLink } from 'lucide-re
 import Layout from '@/components/Layout';
 import StarRating from '@/components/StarRating';
 import { useRecipes } from '@/context/RecipeContext';
+import { useAuth } from '@/context/AuthContext';
 
 const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getRecipe, deleteRecipe, rateRecipe } = useRecipes();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { user } = useAuth();
 
   const recipe = getRecipe(id || '');
 
@@ -69,22 +71,26 @@ const RecipeDetail: React.FC = () => {
           </Link>
           
           <div className="flex gap-2">
-            <Link 
-              to={`/edit/${recipe.id}`} 
-              className="p-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-            >
-              <Pencil size={20} />
-            </Link>
-            <button
-              onClick={handleDelete}
-              className={`p-2 rounded-full transition-colors ${
-                confirmDelete 
-                  ? 'bg-destructive text-destructive-foreground' 
-                  : 'bg-secondary hover:bg-secondary/80'
-              }`}
-            >
-              {confirmDelete ? <Check size={20} /> : <Trash2 size={20} />}
-            </button>
+            {user && (
+              <>
+                <Link 
+                  to={`/edit/${recipe.id}`} 
+                  className="p-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+                >
+                  <Pencil size={20} />
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  className={`p-2 rounded-full transition-colors ${
+                    confirmDelete 
+                      ? 'bg-destructive text-destructive-foreground' 
+                      : 'bg-secondary hover:bg-secondary/80'
+                  }`}
+                >
+                  {confirmDelete ? <Check size={20} /> : <Trash2 size={20} />}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
