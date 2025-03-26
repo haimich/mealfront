@@ -2,17 +2,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { Recipe } from '@/types/recipe';
 
-// Supabase URLs and keys - using fallbacks for safety
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Supabase URLs and keys
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if we have the required configuration
-const hasSupabaseConfig = supabaseUrl && supabaseAnonKey;
-
-// Create Supabase client with config check
-export const supabase = hasSupabaseConfig 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+// Create Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Type for the database recipe (how it's stored in Supabase)
 export interface DbRecipe {
@@ -27,7 +22,7 @@ export interface DbRecipe {
   updated_at: string;
   image_url?: string;
   source?: string;
-  user_id?: string;
+  user_id: string;
 }
 
 // Convert from DB format to app format
@@ -46,7 +41,7 @@ export const mapDbRecipeToRecipe = (dbRecipe: DbRecipe): Recipe => ({
 });
 
 // Convert from app format to DB format
-export const mapRecipeToDbRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>): Omit<DbRecipe, 'id' | 'created_at' | 'updated_at'> => ({
+export const mapRecipeToDbRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>, userId: string): Omit<DbRecipe, 'id' | 'created_at' | 'updated_at'> => ({
   title: recipe.title,
   ingredients: recipe.ingredients,
   instructions: recipe.instructions,
@@ -55,4 +50,5 @@ export const mapRecipeToDbRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'u
   rating: recipe.rating,
   image_url: recipe.imageUrl,
   source: recipe.source,
+  user_id: userId,
 });

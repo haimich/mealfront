@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Recipe, RecipeContextType } from '@/types/recipe';
 import * as recipeService from '@/services/recipeService';
+import { useAuth } from './AuthContext';
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
@@ -9,27 +10,34 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  // Fetch recipes on component mount
+  // Fetch recipes when user changes
   useEffect(() => {
     const loadRecipes = async () => {
       setLoading(true);
-      const result = await recipeService.fetchRecipes();
+      const result = await recipeService.fetchRecipes(user?.id);
       setRecipes(result.recipes);
       setError(result.error);
       setLoading(false);
     };
 
     loadRecipes();
-  }, []);
+  }, [user]);
 
   const addRecipe = async (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newRecipe = await recipeService.addRecipe(recipe);
+    if (!user) {
+      throw new Error('You must be logged in to add a recipe');
+    }
+    const newRecipe = await recipeService.addRecipe(recipe, user.id);
     setRecipes((prevRecipes) => [newRecipe, ...prevRecipes]);
   };
 
   const updateRecipe = async (id: string, updatedFields: Partial<Recipe>) => {
-    await recipeService.updateRecipe(id, updatedFields);
+    if (!user) {
+      throw new Error('You must be logged in to update a recipe');
+    }
+    await recipeService.updateRecipe(id, updatedFields, user.id);
     setRecipes((prevRecipes) =>
       prevRecipes.map((recipe) =>
         recipe.id === id
@@ -40,7 +48,10 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const deleteRecipe = async (id: string) => {
-    await recipeService.deleteRecipe(id);
+    if (!user) {
+      throw new Error('You must be logged in to delete a recipe');
+    }
+    await recipeService.deleteRecipe(id, user.id);
     setRecipes((prevRecipes) => prevRecipes.filter((recipe) => recipe.id !== id));
   };
 
