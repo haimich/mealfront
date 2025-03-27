@@ -101,3 +101,43 @@ export const signOut = async (): Promise<void> => {
     toast.error('Failed to sign out');
   }
 };
+
+export const resetPassword = async (email: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+    
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    
+    toast.success('Password reset instructions sent to your email');
+    return true;
+  } catch (error: any) {
+    console.error('Error resetting password:', error);
+    toast.error('Failed to send reset password instructions');
+    return false;
+  }
+};
+
+export const updatePassword = async (newPassword: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    
+    toast.success('Password updated successfully');
+    return true;
+  } catch (error: any) {
+    console.error('Error updating password:', error);
+    toast.error('Failed to update password');
+    return false;
+  }
+};

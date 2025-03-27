@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -46,39 +48,42 @@ const Login: React.FC = () => {
             <label htmlFor="email" className="block text-sm font-medium">
               Email
             </label>
-            <input
+            <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full p-3 rounded-lg bg-white/50 border border-border focus:ring-2 focus:ring-accent focus:outline-none transition-all"
               placeholder="your@email.com"
             />
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-medium">
+                Password
+              </label>
+              <Link to="/reset-password" className="text-sm text-accent hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+            <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full p-3 rounded-lg bg-white/50 border border-border focus:ring-2 focus:ring-accent focus:outline-none transition-all"
               placeholder="********"
             />
           </div>
           
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full btn-primary"
+            className="w-full"
           >
             {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+          </Button>
         </form>
         
         <div className="text-center mt-6">
