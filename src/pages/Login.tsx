@@ -63,7 +63,10 @@ const Login: React.FC = () => {
               <label htmlFor="password" className="block text-sm font-medium">
                 Password
               </label>
-              <Link to="/reset-password" className="text-sm text-accent hover:underline">
+              <Link 
+                to="/reset-password" 
+                className="text-sm text-primary hover:underline font-medium"
+              >
                 Forgot password?
               </Link>
             </div>
@@ -89,7 +92,7 @@ const Login: React.FC = () => {
         <div className="text-center mt-6">
           <p className="text-muted-foreground">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-accent hover:underline">
+            <Link to="/signup" className="text-primary hover:underline font-medium">
               Sign up
             </Link>
           </p>
