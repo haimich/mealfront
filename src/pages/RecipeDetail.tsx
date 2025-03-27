@@ -146,41 +146,43 @@ const RecipeDetail: React.FC = () => {
           <div className="p-6 sm:p-8">
             <h1 className="text-3xl font-medium mb-2">{recipe.title}</h1>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6">
-              <div className="flex items-center text-muted-foreground">
-                <Clock size={18} className="mr-2" />
-                <span>{formatDuration(recipe.duration)}</span>
+            <div className="flex flex-wrap items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center text-muted-foreground">
+                  <Clock size={18} className="mr-2" />
+                  <span>{formatDuration(recipe.duration)}</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <StarRating
+                    initialRating={recipe.rating}
+                    onChange={handleRating}
+                  />
+                  {recipe.rating && (
+                    <span className="text-sm text-muted-foreground">
+                      {recipe.rating.toFixed(1)}
+                    </span>
+                  )}
+                </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <StarRating
-                  initialRating={recipe.rating}
-                  onChange={handleRating}
-                />
-                {recipe.rating && (
-                  <span className="text-sm text-muted-foreground">
-                    {recipe.rating.toFixed(1)}
-                  </span>
-                )}
-              </div>
+              {recipe.userId && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Avatar className="h-7 w-7">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      <User size={14} />
+                    </AvatarFallback>
+                  </Avatar>
+                  {loading ? (
+                    <span className="animate-pulse">Loading creator...</span>
+                  ) : creator ? (
+                    <span>Recipe by {creator.username}</span>
+                  ) : (
+                    <span>Recipe by user</span>
+                  )}
+                </div>
+              )}
             </div>
-            
-            {recipe.userId && (
-              <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                    <User size={14} />
-                  </AvatarFallback>
-                </Avatar>
-                {loading ? (
-                  <span className="animate-pulse">Loading creator...</span>
-                ) : creator ? (
-                  <span>Recipe by {creator.username}</span>
-                ) : (
-                  <span>Recipe by user</span>
-                )}
-              </div>
-            )}
             
             {recipe.source && (
               <div className="mb-6">
