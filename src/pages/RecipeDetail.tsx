@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Clock, Pencil, Trash2, ArrowLeft, Check, ExternalLink, User } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -7,6 +7,7 @@ import StarRating from '@/components/StarRating';
 import { useRecipes } from '@/context/RecipeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { supabase } from '@/lib/supabase';
 
 const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,8 +15,44 @@ const RecipeDetail: React.FC = () => {
   const { getRecipe, deleteRecipe, rateRecipe } = useRecipes();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { user } = useAuth();
+  const [creator, setCreator] = useState<{ username: string; fullName: string | null } | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const recipe = getRecipe(id || '');
+
+  // Fetch creator profile
+  useEffect(() => {
+    const fetchCreatorProfile = async () => {
+      if (!recipe?.userId) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, full_name')
+          .eq('id', recipe.userId)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching creator profile:', error);
+          return;
+        }
+        
+        if (data) {
+          setCreator({
+            username: data.username,
+            fullName: data.full_name
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching creator profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCreatorProfile();
+  }, [recipe]);
 
   if (!recipe) {
     return (
@@ -135,7 +172,13 @@ const RecipeDetail: React.FC = () => {
                     <User size={14} />
                   </AvatarFallback>
                 </Avatar>
-                <span>Recipe by user</span>
+                {loading ? (
+                  <span className="animate-pulse">Loading creator...</span>
+                ) : creator ? (
+                  <span>Recipe by {creator.username}</span>
+                ) : (
+                  <span>Recipe by user</span>
+                )}
               </div>
             )}
             
