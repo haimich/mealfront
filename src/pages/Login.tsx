@@ -65,7 +65,7 @@ const Login: React.FC = () => {
               </label>
               <Link 
                 to="/reset-password" 
-                className="text-sm text-primary hover:underline font-medium"
+                className="text-sm text-blue-600 hover:underline font-medium"
               >
                 Forgot password?
               </Link>
@@ -92,7 +92,7 @@ const Login: React.FC = () => {
         <div className="text-center mt-6">
           <p className="text-muted-foreground">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-primary hover:underline font-medium">
+            <Link to="/signup" className="text-blue-600 hover:underline font-medium">
               Sign up
             </Link>
           </p>
