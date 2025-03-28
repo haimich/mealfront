@@ -244,14 +244,18 @@ const RecipeDetail: React.FC = () => {
               <section>
                 <h2 className="text-xl font-medium mb-4">Ingredients</h2>
                 
-                {recipe.originalIngredients && (
+                {recipe.originalIngredients && recipe.originalIngredients.length > 0 && (
                   <IngredientScaler scale={scale} onScaleChange={setScale} />
                 )}
                 
                 <ul className="space-y-2 pl-5">
-                  {(recipe.originalIngredients ? recipe.originalIngredients : recipe.ingredients).map((ingredient, index) => (
+                  {(recipe.originalIngredients && recipe.originalIngredients.length > 0 
+                    ? recipe.originalIngredients 
+                    : recipe.ingredients).map((ingredient, index) => (
                     <li key={index} className="list-disc">
-                      {recipe.originalIngredients ? scaleIngredient(ingredient) : ingredient}
+                      {recipe.originalIngredients && recipe.originalIngredients.length > 0
+                        ? scaleIngredient(ingredient)
+                        : ingredient}
                     </li>
                   ))}
                 </ul>
