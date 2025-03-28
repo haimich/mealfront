@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Clock, Edit, Trash2, Share, ExternalLink } from 'lucide-react';
+import { ChevronLeft, Clock, Edit, Trash2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import StarRating from '@/components/StarRating';
 import IngredientScaler from '@/components/IngredientScaler';
-import MakeIntegration from '@/components/MakeIntegration';
 import { useRecipes } from '@/context/RecipeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -18,7 +17,6 @@ const RecipeDetail = () => {
   const navigate = useNavigate();
   const [recipe, setRecipe] = useState(getRecipe(id || ''));
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [showMakeIntegration, setShowMakeIntegration] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -99,8 +97,7 @@ const RecipeDetail = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center text-sm text-accent hover:underline"
                 >
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  Original Source
+                  Source
                 </a>
               </div>
             )}
@@ -136,23 +133,10 @@ const RecipeDetail = () => {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowMakeIntegration(!showMakeIntegration)}
-                >
-                  <Share className="h-4 w-4 mr-1" />
-                  {showMakeIntegration ? 'Hide Make.com' : 'Connect to Make.com'}
-                </Button>
               </div>
             )}
           </div>
         </div>
-
-        {showMakeIntegration && recipe && (
-          <MakeIntegration recipe={recipe} />
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
           <div className="md:col-span-1">
