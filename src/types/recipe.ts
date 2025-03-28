@@ -4,6 +4,7 @@ export interface Recipe {
   id: string;
   title: string;
   ingredients: string[];
+  originalIngredients?: string[]; // Store the original ingredients for scaling
   instructions: string;
   notes?: string;
   duration: number; // in minutes

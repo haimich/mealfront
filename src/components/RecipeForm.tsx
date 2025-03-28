@@ -62,7 +62,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ initialData, mode }) => {
       newErrors.duration = 'Duration must be greater than 0';
     }
     
-    // Validate URL format if source is provided
     if (source && !isValidUrl(source)) {
       newErrors.source = 'Please enter a valid URL';
     }
@@ -71,7 +70,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ initialData, mode }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Helper function to validate URL format
   const isValidUrl = (string: string) => {
     try {
       new URL(string);
@@ -97,6 +95,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ initialData, mode }) => {
       imageUrl: imageUrl || undefined,
       source: source || undefined,
       rating: initialData?.rating,
+      originalIngredients: ingredients.filter((ingredient) => ingredient.trim() !== '')
     };
     
     if (mode === 'create') {

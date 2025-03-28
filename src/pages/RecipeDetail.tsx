@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Clock, Pencil, Trash2, ArrowLeft, Check, ExternalLink, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import StarRating from '@/components/StarRating';
+import IngredientScaler from '@/components/IngredientScaler';
 import { useRecipes } from '@/context/RecipeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -17,10 +17,10 @@ const RecipeDetail: React.FC = () => {
   const { user } = useAuth();
   const [creator, setCreator] = useState<{ username: string; fullName: string | null } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scale, setScale] = useState(1);
 
   const recipe = getRecipe(id || '');
 
-  // Fetch creator profile
   useEffect(() => {
     const fetchCreatorProfile = async () => {
       if (!recipe?.userId) return;
@@ -65,7 +65,6 @@ const RecipeDetail: React.FC = () => {
     );
   }
 
-  // Format the duration to a human-readable format
   const formatDuration = (minutes: number) => {
     if (minutes < 60) {
       return `${minutes} minutes`;
@@ -88,7 +87,6 @@ const RecipeDetail: React.FC = () => {
     } else {
       setConfirmDelete(true);
       
-      // Reset confirmation after 3 seconds
       setTimeout(() => {
         setConfirmDelete(false);
       }, 3000);
@@ -97,6 +95,50 @@ const RecipeDetail: React.FC = () => {
 
   const handleRating = (rating: number) => {
     rateRecipe(recipe.id, rating);
+  };
+
+  const scaleIngredient = (ingredient: string): string => {
+    if (!recipe?.originalIngredients) return ingredient;
+    
+    const regex = /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.\d+|\d+)(\s+)/;
+    
+    const match = ingredient.match(regex);
+    
+    if (!match) return ingredient;
+    
+    const quantity = match[1];
+    let scaledQuantity: number | string;
+    
+    if (quantity.includes('/')) {
+      const parts = quantity.split('/');
+      if (parts.length === 2) {
+        const numerator = parseFloat(parts[0]);
+        const denominator = parseFloat(parts[1]);
+        scaledQuantity = (numerator / denominator) * scale;
+      } else {
+        const mixedParts = quantity.split(' ');
+        const whole = parseFloat(mixedParts[0]);
+        const fractionParts = mixedParts[1].split('/');
+        const numerator = parseFloat(fractionParts[0]);
+        const denominator = parseFloat(fractionParts[1]);
+        scaledQuantity = (whole + numerator / denominator) * scale;
+      }
+    } else {
+      scaledQuantity = parseFloat(quantity) * scale;
+    }
+
+    if (Number.isInteger(scaledQuantity)) {
+      scaledQuantity = scaledQuantity.toString();
+    } else {
+      if (scaledQuantity === 0.5) scaledQuantity = "1/2";
+      else if (scaledQuantity === 0.25) scaledQuantity = "1/4";
+      else if (scaledQuantity === 0.75) scaledQuantity = "3/4";
+      else if (scaledQuantity === 0.33 || scaledQuantity === 0.333) scaledQuantity = "1/3";
+      else if (scaledQuantity === 0.67 || scaledQuantity === 0.666) scaledQuantity = "2/3";
+      else scaledQuantity = scaledQuantity.toFixed(2).replace(/\.00$/, '');
+    }
+    
+    return ingredient.replace(match[0], `${scaledQuantity}${match[2]}`);
   };
 
   return (
@@ -201,9 +243,16 @@ const RecipeDetail: React.FC = () => {
             <div className="space-y-8">
               <section>
                 <h2 className="text-xl font-medium mb-4">Ingredients</h2>
+                
+                {recipe.originalIngredients && (
+                  <IngredientScaler scale={scale} onScaleChange={setScale} />
+                )}
+                
                 <ul className="space-y-2 pl-5">
-                  {recipe.ingredients.map((ingredient, index) => (
-                    <li key={index} className="list-disc">{ingredient}</li>
+                  {(recipe.originalIngredients ? recipe.originalIngredients : recipe.ingredients).map((ingredient, index) => (
+                    <li key={index} className="list-disc">
+                      {recipe.originalIngredients ? scaleIngredient(ingredient) : ingredient}
+                    </li>
                   ))}
                 </ul>
               </section>
