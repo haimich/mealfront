@@ -1,290 +1,200 @@
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Clock, Pencil, Trash2, ArrowLeft, Check, ExternalLink, User } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Clock, Edit, Trash2, Share, ExternalLink } from 'lucide-react';
 import Layout from '@/components/Layout';
 import StarRating from '@/components/StarRating';
 import IngredientScaler from '@/components/IngredientScaler';
+import MakeIntegration from '@/components/MakeIntegration';
 import { useRecipes } from '@/context/RecipeContext';
 import { useAuth } from '@/context/AuthContext';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { supabase } from '@/lib/supabase';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
-const RecipeDetail: React.FC = () => {
+const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { getRecipe, deleteRecipe, rateRecipe } = useRecipes();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { getRecipe, deleteRecipe, rateRecipe, loading } = useRecipes();
   const { user } = useAuth();
-  const [creator, setCreator] = useState<{ username: string; fullName: string | null } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [scale, setScale] = useState(1);
-
-  const recipe = getRecipe(id || '');
+  const navigate = useNavigate();
+  const [recipe, setRecipe] = useState(getRecipe(id || ''));
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showMakeIntegration, setShowMakeIntegration] = useState(false);
 
   useEffect(() => {
-    const fetchCreatorProfile = async () => {
-      if (!recipe?.userId) return;
-      
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, full_name')
-          .eq('id', recipe.userId)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching creator profile:', error);
-          return;
-        }
-        
-        if (data) {
-          setCreator({
-            username: data.username,
-            fullName: data.full_name
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching creator profile:', error);
-      } finally {
-        setLoading(false);
+    if (!loading) {
+      const foundRecipe = getRecipe(id || '');
+      setRecipe(foundRecipe);
+
+      if (!foundRecipe) {
+        navigate('/');
       }
-    };
+    }
+  }, [id, getRecipe, loading, navigate]);
 
-    fetchCreatorProfile();
-  }, [recipe]);
-
-  if (!recipe) {
+  if (loading || !recipe) {
     return (
       <Layout>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Recipe not found.</p>
-          <Link to="/" className="btn-primary">Go back to Dashboard</Link>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-pulse text-lg">Loading recipe...</div>
         </div>
       </Layout>
     );
   }
 
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes} minutes`;
-    }
-    
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    
-    if (remainingMinutes === 0) {
-      return `${hours} hour${hours > 1 ? 's' : ''}`;
-    }
-    
-    return `${hours} hour${hours > 1 ? 's' : ''} ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}`;
-  };
-
-  const handleDelete = () => {
-    if (confirmDelete) {
-      deleteRecipe(recipe.id);
-      navigate('/');
-    } else {
-      setConfirmDelete(true);
-      
-      setTimeout(() => {
-        setConfirmDelete(false);
-      }, 3000);
-    }
+  const handleDelete = async () => {
+    await deleteRecipe(recipe.id);
+    navigate('/');
   };
 
   const handleRating = (rating: number) => {
     rateRecipe(recipe.id, rating);
   };
 
-  const scaleIngredient = (ingredient: string): string => {
-    if (!recipe?.originalIngredients) return ingredient;
-    
-    const regex = /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.\d+|\d+)(\s+)/;
-    
-    const match = ingredient.match(regex);
-    
-    if (!match) return ingredient;
-    
-    const quantity = match[1];
-    let scaledQuantity: number | string;
-    
-    if (quantity.includes('/')) {
-      const parts = quantity.split('/');
-      if (parts.length === 2) {
-        const numerator = parseFloat(parts[0]);
-        const denominator = parseFloat(parts[1]);
-        scaledQuantity = (numerator / denominator) * scale;
-      } else {
-        const mixedParts = quantity.split(' ');
-        const whole = parseFloat(mixedParts[0]);
-        const fractionParts = mixedParts[1].split('/');
-        const numerator = parseFloat(fractionParts[0]);
-        const denominator = parseFloat(fractionParts[1]);
-        scaledQuantity = (whole + numerator / denominator) * scale;
-      }
-    } else {
-      scaledQuantity = parseFloat(quantity) * scale;
-    }
-
-    if (Number.isInteger(scaledQuantity)) {
-      scaledQuantity = scaledQuantity.toString();
-    } else {
-      if (scaledQuantity === 0.5) scaledQuantity = "1/2";
-      else if (scaledQuantity === 0.25) scaledQuantity = "1/4";
-      else if (scaledQuantity === 0.75) scaledQuantity = "3/4";
-      else if (scaledQuantity === 0.33 || scaledQuantity === 0.333) scaledQuantity = "1/3";
-      else if (scaledQuantity === 0.67 || scaledQuantity === 0.666) scaledQuantity = "2/3";
-      else scaledQuantity = scaledQuantity.toFixed(2).replace(/\.00$/, '');
-    }
-    
-    return ingredient.replace(match[0], `${scaledQuantity}${match[2]}`);
-  };
+  const canEdit = user && recipe.userId === user.id;
 
   return (
     <Layout>
-      <div className="animate-fade-in max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <Link to="/" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft size={20} className="mr-2" />
-            <span>Back to Recipes</span>
+      <div className="max-w-4xl mx-auto animate-fade-in">
+        <div className="mb-6">
+          <Link to="/" className="inline-flex items-center text-sm font-medium hover:text-accent transition-colors">
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Back to Recipes
           </Link>
-          
-          <div className="flex gap-2">
-            {user && user.id === recipe.userId && (
-              <>
-                <Link 
-                  to={`/edit/${recipe.id}`} 
-                  className="p-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-6 mb-8">
+          {recipe.imageUrl && (
+            <div className="md:w-1/2 lg:w-2/5">
+              <img 
+                src={recipe.imageUrl} 
+                alt={recipe.title} 
+                className="w-full h-64 md:h-80 object-cover rounded-lg shadow-md"
+              />
+            </div>
+          )}
+
+          <div className={`${recipe.imageUrl ? 'md:w-1/2 lg:w-3/5' : 'w-full'}`}>
+            <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>
+            
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center">
+                <Clock className="h-4 w-4 text-muted-foreground mr-1" />
+                <span className="text-sm">{recipe.duration} min</span>
+              </div>
+              
+              <div className="flex items-center">
+                <StarRating
+                  rating={recipe.rating || 0}
+                  onRate={handleRating}
+                  editable={!!user}
+                />
+              </div>
+            </div>
+
+            {recipe.source && (
+              <div className="mb-4">
+                <a
+                  href={recipe.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-sm text-accent hover:underline"
                 >
-                  <Pencil size={20} />
-                </Link>
-                <button
-                  onClick={handleDelete}
-                  className={`p-2 rounded-full transition-colors ${
-                    confirmDelete 
-                      ? 'bg-destructive text-destructive-foreground' 
-                      : 'bg-secondary hover:bg-secondary/80'
-                  }`}
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Original Source
+                </a>
+              </div>
+            )}
+
+            {canEdit && (
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate(`/edit/${recipe.id}`)}
                 >
-                  {confirmDelete ? <Check size={20} /> : <Trash2 size={20} />}
-                </button>
-              </>
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+                
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Delete Recipe</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to delete "{recipe.title}"? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+                      <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowMakeIntegration(!showMakeIntegration)}
+                >
+                  <Share className="h-4 w-4 mr-1" />
+                  {showMakeIntegration ? 'Hide Make.com' : 'Connect to Make.com'}
+                </Button>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="glass rounded-2xl overflow-hidden mb-8">
-          {recipe.imageUrl && (
-            <div className="aspect-[16/9] overflow-hidden">
-              <img
-                src={recipe.imageUrl}
-                alt={recipe.title}
-                className="w-full h-full object-cover"
+        {showMakeIntegration && recipe && (
+          <MakeIntegration recipe={recipe} />
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+          <div className="md:col-span-1">
+            <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
+            
+            {recipe.originalIngredients && recipe.originalIngredients.length > 0 && (
+              <IngredientScaler
+                originalIngredients={recipe.originalIngredients}
+                ingredients={recipe.ingredients}
+                setIngredients={() => {}}
+                readOnly={true}
               />
-            </div>
-          )}
-          
-          <div className="p-6 sm:p-8">
-            <h1 className="text-3xl font-medium mb-2">{recipe.title}</h1>
-            
-            <div className="flex flex-wrap items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center text-muted-foreground">
-                  <Clock size={18} className="mr-2" />
-                  <span>{formatDuration(recipe.duration)}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <StarRating
-                    initialRating={recipe.rating}
-                    onChange={handleRating}
-                  />
-                  {recipe.rating && (
-                    <span className="text-sm text-muted-foreground">
-                      {recipe.rating.toFixed(1)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {recipe.userId && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Avatar className="h-7 w-7">
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                      <User size={14} />
-                    </AvatarFallback>
-                  </Avatar>
-                  {loading ? (
-                    <span className="animate-pulse">Loading creator...</span>
-                  ) : creator ? (
-                    <span>Recipe by {creator.username}</span>
-                  ) : (
-                    <span>Recipe by user</span>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {recipe.source && (
-              <div className="mb-6">
-                <a 
-                  href={recipe.source} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-accent hover:text-accent/80 transition-colors"
-                >
-                  <ExternalLink size={16} className="mr-2" aria-hidden="true" />
-                  <span>Original recipe source</span>
-                </a>
-              </div>
             )}
             
-            <div className="space-y-8">
-              <section>
-                <h2 className="text-xl font-medium mb-4">Ingredients</h2>
-                
-                {recipe.originalIngredients && recipe.originalIngredients.length > 0 && (
-                  <IngredientScaler scale={scale} onScaleChange={setScale} />
-                )}
-                
-                <ul className="space-y-2 pl-5">
-                  {(recipe.originalIngredients && recipe.originalIngredients.length > 0 
-                    ? recipe.originalIngredients 
-                    : recipe.ingredients).map((ingredient, index) => (
-                    <li key={index} className="list-disc">
-                      {recipe.originalIngredients && recipe.originalIngredients.length > 0
-                        ? scaleIngredient(ingredient)
-                        : ingredient}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-              
-              <section>
-                <h2 className="text-xl font-medium mb-4">Instructions</h2>
-                <div className="prose prose-slate max-w-none whitespace-pre-wrap">
-                  {recipe.instructions}
-                </div>
-              </section>
-              
-              {recipe.notes && (
-                <section className="bg-secondary p-6 rounded-xl">
-                  <h2 className="text-xl font-medium mb-2">Notes</h2>
-                  <div className="prose prose-slate max-w-none whitespace-pre-wrap">
-                    {recipe.notes}
-                  </div>
-                </section>
-              )}
-            </div>
+            <ul className="space-y-2 mt-4">
+              {recipe.ingredients.map((ingredient, index) => (
+                <li key={index} className="flex items-baseline">
+                  <span className="block w-full py-1">{ingredient}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-        
-        <div className="text-sm text-muted-foreground mb-8">
-          <p>Created: {new Date(recipe.createdAt).toLocaleDateString()}</p>
-          {recipe.updatedAt !== recipe.createdAt && (
-            <p>Last updated: {new Date(recipe.updatedAt).toLocaleDateString()}</p>
-          )}
+          
+          <div className="md:col-span-2">
+            <h2 className="text-xl font-semibold mb-4">Instructions</h2>
+            <div className="prose max-w-none">
+              {recipe.instructions.split('\n').map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
+            
+            {recipe.notes && (
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-2">Notes</h3>
+                <div className="prose max-w-none bg-muted/50 p-4 rounded-lg">
+                  {recipe.notes.split('\n').map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Layout>
