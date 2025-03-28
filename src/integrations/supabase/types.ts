@@ -45,6 +45,7 @@ export type Database = {
           ingredients: string[]
           instructions: string
           notes: string | null
+          original_ingredients: string[] | null
           rating: number | null
           source: string | null
           title: string
@@ -59,6 +60,7 @@ export type Database = {
           ingredients: string[]
           instructions: string
           notes?: string | null
+          original_ingredients?: string[] | null
           rating?: number | null
           source?: string | null
           title: string
@@ -73,6 +75,7 @@ export type Database = {
           ingredients?: string[]
           instructions?: string
           notes?: string | null
+          original_ingredients?: string[] | null
           rating?: number | null
           source?: string | null
           title?: string

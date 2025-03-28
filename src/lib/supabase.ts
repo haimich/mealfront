@@ -20,6 +20,7 @@ export interface DbRecipe {
   image_url?: string;
   source?: string;
   user_id: string;
+  original_ingredients?: string[];
 }
 
 // Convert from DB format to app format
@@ -36,6 +37,7 @@ export const mapDbRecipeToRecipe = (dbRecipe: DbRecipe): Recipe => ({
   imageUrl: dbRecipe.image_url,
   source: dbRecipe.source,
   userId: dbRecipe.user_id,
+  originalIngredients: dbRecipe.original_ingredients,
 });
 
 // Convert from app format to DB format
@@ -49,4 +51,5 @@ export const mapRecipeToDbRecipe = (recipe: Omit<Recipe, 'id' | 'createdAt' | 'u
   image_url: recipe.imageUrl,
   source: recipe.source,
   user_id: userId,
+  original_ingredients: recipe.originalIngredients,
 });

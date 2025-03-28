@@ -84,6 +84,11 @@ export const updateRecipe = async (id: string, updatedFields: Partial<Recipe>, u
       delete dbFields.imageUrl;
     }
 
+    if (updatedFields.originalIngredients !== undefined) {
+      dbFields.original_ingredients = updatedFields.originalIngredients;
+      delete dbFields.originalIngredients;
+    }
+
     const { error } = await supabase
       .from('recipes')
       .update({ ...dbFields, updated_at: new Date().toISOString() })
